@@ -114,36 +114,56 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
 
 ## Règles de collaboration
 
-### 1. Branches
+### 🚀 Workflow Git
+Branches principales
 
-Le workflow de développement se base sur un système de branches. Voici les principales règles :
+    main : branche de production (protégée)
 
-* **`main`** : Branche principale contenant la version stable de l'application. Ne travaillez jamais directement sur cette branche.
-* **`develop`** : Branche de développement contenant les dernières fonctionnalités en développement. Cette branche est à fusionner régulièrement avec `main` une fois les fonctionnalités terminées.
-* **`feature/nom-fonctionnalite`** : Créez une branche pour chaque nouvelle fonctionnalité que vous développez. Nom de la branche : `feature/<nom_fonctionnalite>`. Ex : `feature/authentification`.
+    develop : branche de développement principale
 
-### 2. Protéger la branche `main`
+Règles à suivre
 
-La branche `main` est protégée. Seuls les commits validés via une Pull Request seront fusionnés.
+    Toujours partir de develop pour créer une branche.
 
-### 3. Pull Requests (PR)
+    Nommer les branches de fonctionnalités comme suit :
 
-Lorsque vous avez terminé une fonctionnalité ou un bug, ouvrez une Pull Request pour fusionner votre branche de fonctionnalité avec `develop`. Une revue de code sera effectuée avant toute fusion.
+feature/nom-de-la-fonctionnalite
 
-### 4. Conventions de nommage des branches
+Exemples :
 
-* Utilisez des noms clairs et explicites pour les branches (par ex. `feature/login`, `bugfix/correction-auth`).
+    feature/authentication
 
-### 5. Mise à jour de votre branche
+    feature/gestion-rdv
 
-Avant de commencer à travailler sur une nouvelle fonctionnalité ou un correctif, assurez-vous que votre branche locale est à jour avec `develop` :
+Création d'une branche
 
-```bash
 git checkout develop
 git pull origin develop
-git checkout <votre-branche>
-git merge develop
-```
+git checkout -b feature/ma-fonctionnalite
+
+Pusher la branche
+
+git add .
+git commit -m "Implémentation de ma fonctionnalité"
+git push origin feature/ma-fonctionnalite
+
+Ensuite, ouvrez une Pull Request vers develop sur GitHub.
+✅ Bonnes pratiques
+
+    Ne jamais travailler directement sur main.
+
+    Toujours créer une branche à partir de develop.
+
+    Utiliser des noms de branche clairs et explicites.
+
+    Faire des commits réguliers avec des messages compréhensibles.
+
+    Ouvrir une PR pour chaque nouvelle fonctionnalité.
+
+    Ne jamais push .env (utilisez .env.example comme modèle).
+
+    Relire le code de ses coéquipiers (Code Review).
+
 
 ### 6. Commits et messages
 
