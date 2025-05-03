@@ -18,7 +18,7 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
 ##1. Clonez ce repository sur votre machine locale :
 
    ```bash
-   git clone https://github.com/username/AlloMedecin.git
+   git clone https://github.com/username/AlloMedecin.git](https://github.com/MaxLaPeuff/AlloMedecin.git
 ````
 
 ##2. Allez dans le dossier du projet :
