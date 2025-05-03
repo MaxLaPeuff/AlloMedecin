@@ -15,25 +15,25 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
 
 ## Installation
 
-1. Clonez ce repository sur votre machine locale :
+##1. Clonez ce repository sur votre machine locale :
 
    ```bash
    git clone https://github.com/username/AlloMedecin.git
 ````
 
-2. Allez dans le dossier du projet :
+##2. Allez dans le dossier du projet :
 
    ```bash
    cd AlloMedecin
    ```
 
-3. Créez un environnement virtuel pour installer les dépendances :
+##3. Créez un environnement virtuel pour installer les dépendances :
 
    ```bash
    python3 -m venv venv
    ```
 
-4. Activez l'environnement virtuel :
+##4. Activez l'environnement virtuel :
 
    * Sur macOS/Linux :
 
@@ -47,13 +47,13 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
      venv\Scripts\activate
      ```
 
-5. Installez les dépendances à partir du fichier `requirements.txt` :
+##5. Installez les dépendances à partir du fichier `requirements.txt` :
 
    ```bash
    pip install -r requirements.txt
    ```
 
-6. **Configurer votre base de données PostgreSQL :**
+##6. **Configurer votre base de données PostgreSQL :**
 
    * Assurez-vous d'avoir PostgreSQL installé sur votre machine.
    * Créez une base de données PostgreSQL sur votre machine.
@@ -62,7 +62,7 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
      CREATE DATABASE allomedecin;
      ```
 
-7. **Configuration des variables d'environnement :**
+##7. **Configuration des variables d'environnement :**
 
    * Copiez le fichier `.env.example` en `.env` :
 
@@ -98,13 +98,13 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
      * **DEBUG** : Indique si Django doit être en mode debug (utilisé pendant le développement).
      * **ALLOWED\_HOSTS** : Liste des hôtes autorisés pour le serveur Django, généralement `127.0.0.1` et `localhost`.
 
-8. **Effectuer les migrations de base de données :**
+##8. **Effectuer les migrations de base de données :**
 
    ```bash
    python3 manage.py migrate
    ```
 
-9. **Démarrer le serveur Django en mode développement :**
+##9. **Démarrer le serveur Django en mode développement :**
 
    ```bash
    python3 manage.py runserver
@@ -112,7 +112,7 @@ Avant de commencer, assurez-vous que vous avez installé les outils suivants :
 
    Vous pouvez maintenant accéder à l'application à l'adresse [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## Règles de collaboration
+##Règles de collaboration
 
 ### 🚀 Workflow Git
 Branches principales
