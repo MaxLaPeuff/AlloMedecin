@@ -12,8 +12,35 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.timezone import now, make_aware, is_naive
 from datetime import datetime
+from django.urls import reverse
 
 
+
+
+
+class MedecinDisponibiliteView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        medecin_id = kwargs.get('id_medecin')
+        try:
+            medecin = Medecin.objects.get(id=medecin_id)
+        except Medecin.DoesNotExist:
+            return Response({"error": "Médecin non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+
+        disponibilites = DisponibiliteMedecin.objects.filter(medecin=medecin).values('jour', 'heure_debut', 'heure_fin')
+
+        medecin_data = {
+            "id": medecin.id,
+            "nom": medecin.nom,
+            "prenom": medecin.prenom,
+            "specialite": medecin.specialite,
+            "email": medecin.email,
+            "disponibilites": list(disponibilites)
+        }
+
+        return Response(medecin_data, status=status.HTTP_200_OK)
+
+# AU niveau de cette vu , le patient demande un rendez-vous à un docteur de son choix
 class RendezVousView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -59,26 +86,43 @@ class RendezVousView(APIView):
             status='EN_ATTENTE'
         )
 
-        # Envoi d'une notification au médecin (par email)
+        #Envoi d'une notification au médecin (par email)
+        confirm_url = request.build_absolute_uri(
+            reverse('confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'CONFIRME'})
+        )
+        refuse_url = request.build_absolute_uri(
+            reverse('confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
+        )
+
         send_mail(
-            subject="AllôMedecin.Nouvelle demande de rendez-vous",
-            message=f"Vous avez une nouvelle demande de rendez-vous de la part de {patient.username} pour le {date}. Veuillez confirmer ou refuser.",
+            subject="AllôMedecin - Nouvelle demande de rendez-vous",
+            message=f"""
+                Vous avez une nouvelle demande de rendez-vous de la part de {patient.username} pour le {date}.
+                Veuillez confirmer ou refuser en cliquant sur les liens ci-dessous :
+                - Confirmer : {confirm_url}
+                - Refuser : {refuse_url}
+            """,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[medecin.email],
         )
 
         return Response({"message": "Demande de rendez-vous envoyée avec succès. En attente de confirmation du médecin."}, status=status.HTTP_201_CREATED)
 
-    def patch(self, request, *args, **kwargs):
+   
+# Vue permettant au medecin de confirmer le rendez-vous du patient
+class ConfirmRendezVous(APIView):
+    
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
         rendez_vous_id = kwargs.get('id')
         try:
             rendez_vous = RendezVous.objects.get(id=rendez_vous_id, medecin=request.user)
         except RendezVous.DoesNotExist:
             return Response({"error": "Rendez-vous non trouvé ou vous n'êtes pas autorisé à le modifier"}, status=status.HTTP_404_NOT_FOUND)
 
-        statut = request.data.get('satut')
-        if statut == 'CONFIRM':
-            rendez_vous.status = 'Comfirmé'
+        action = request.data.get('action')
+        if action == 'CONFIRM':
+            rendez_vous.status = 'Confirmé'
             rendez_vous.save()
             # Notification au patient
             send_mail(
@@ -88,7 +132,7 @@ class RendezVousView(APIView):
                 recipient_list=[rendez_vous.patient.email],
             )
             return Response({"message": "Rendez-vous confirmé avec succès."}, status=status.HTTP_200_OK)
-        elif statut == 'REFUSE':
+        elif action == 'ANNULE':
             rendez_vous.statut = 'Annulé'
             rendez_vous.save()
             # Notification au patient
@@ -103,25 +147,3 @@ class RendezVousView(APIView):
             return Response({"error": "Action non valide"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MedecinDisponibiliteView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        medecin_id = kwargs.get('id')
-        try:
-            medecin = Medecin.objects.get(id=medecin_id)
-        except Medecin.DoesNotExist:
-            return Response({"error": "Médecin non trouvé"}, status=status.HTTP_404_NOT_FOUND)
-
-        disponibilites = DisponibiliteMedecin.objects.filter(medecin=medecin).values('jour', 'heure_debut', 'heure_fin')
-
-        medecin_data = {
-            "id": medecin.id,
-            "nom": medecin.nom,
-            "prenom": medecin.prenom,
-            "specialite": medecin.specialite,
-            "email": medecin.email,
-            "disponibilites": list(disponibilites)
-        }
-
-        return Response(medecin_data, status=status.HTTP_200_OK)
