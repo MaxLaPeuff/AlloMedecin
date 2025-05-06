@@ -31,6 +31,11 @@ ALLOWED_HOSTS = [config('ALLOWED_HOSTS')]
 
 AUTH_USER_MODEL = 'users.User'
 
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5  # Par exemple, 10 résultats par page
+}
+
 
 
 # Application definition
@@ -47,6 +52,7 @@ INSTALLED_APPS = [
     'consultations',   
     'payments',         
     'notifications',  
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
