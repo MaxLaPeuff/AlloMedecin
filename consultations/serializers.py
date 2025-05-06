@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import RendezVous, DisponibiliteMedecin, Consultation
 from users.models import Patient, Medecin
+from users.serializers import PatientSerializer, MedecinSerializer
 
 class RendezVousSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,7 +9,7 @@ class RendezVousSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     async def validate_date_heure(self, value):
-        # Exemple de validation asynchrone
+       
         if value < await self.get_current_datetime():
             raise serializers.ValidationError("La date et l'heure doivent être dans le futur.")
         return value
@@ -29,7 +30,7 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
         return data
 
     async def check_conflict(self, data):
-        # Exemple de vérification asynchrone
+       
         return await DisponibiliteMedecin.objects.filter(
             medecin=data['medecin'],
             jour=data['jour'],
@@ -38,8 +39,8 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
         ).aexists()
 
 class ConsultationSerializer(serializers.ModelSerializer):
-    patient = serializers.StringRelatedField()  # Sérialisation simple pour le patient
-    medecin = serializers.StringRelatedField()  # Sérialisation simple pour le médecin
+    patient = PatientSerializer()  # Utilisation du PatientSerializer
+    medecin = MedecinSerializer()  # Utilisation du MedecinSerializer
 
     class Meta:
         model = Consultation
