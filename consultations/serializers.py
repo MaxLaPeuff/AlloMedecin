@@ -2,20 +2,19 @@ from rest_framework import serializers
 from .models import RendezVous, DisponibiliteMedecin, Consultation
 from users.models import Patient, Medecin
 from users.serializers import PatientSerializer, MedecinSerializer
+from datetime import datetime
 
 class RendezVousSerializer(serializers.ModelSerializer):
     class Meta:
         model = RendezVous
         fields = '__all__'
 
-    async def validate_date_heure(self, value):
-       
-        if value < await self.get_current_datetime():
+    def validate_date_heure(self, value):
+        if value < self.get_current_datetime():
             raise serializers.ValidationError("La date et l'heure doivent être dans le futur.")
         return value
 
-    async def get_current_datetime(self):
-        from datetime import datetime
+    def get_current_datetime(self):
         return datetime.now()
 
 class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
@@ -23,20 +22,19 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
         model = DisponibiliteMedecin
         fields = '__all__'
 
-    async def validate(self, data):
-        # Validation asynchrone pour vérifier les conflits d'horaires
-        if await self.check_conflict(data):
+    def validate(self, data):
+        # Validation synchrone pour vérifier les conflits d'horaires
+        if self.check_conflict(data):
             raise serializers.ValidationError("Conflit avec une autre disponibilité.")
         return data
 
-    async def check_conflict(self, data):
-       
-        return await DisponibiliteMedecin.objects.filter(
+    def check_conflict(self, data):
+        return DisponibiliteMedecin.objects.filter(
             medecin=data['medecin'],
             jour=data['jour'],
             heure_debut__lt=data['heure_fin'],
             heure_fin__gt=data['heure_debut']
-        ).aexists()
+        ).exists()
 
 class ConsultationSerializer(serializers.ModelSerializer):
     patient = PatientSerializer()  # Utilisation du PatientSerializer
@@ -46,8 +44,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
         model = Consultation
         fields = '__all__'
 
-    async def validate_duree(self, value):
-        # Exemple de validation asynchrone pour la durée
+    def validate_duree(self, value):
+        # Exemple de validation synchrone pour la durée
         if value.total_seconds() <= 0:
             raise serializers.ValidationError("La durée doit être positive.")
         return value

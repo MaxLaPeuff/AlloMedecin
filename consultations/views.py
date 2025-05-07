@@ -76,7 +76,7 @@ class RendezVousView(APIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        medecin_id = kwargs.get('id')
+        medecin_id = kwargs.get('id_medecin')
         try:
             medecin = Medecin.objects.get(id=medecin_id)
         except Medecin.DoesNotExist:
