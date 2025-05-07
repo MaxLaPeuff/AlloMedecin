@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from django.contrib.auth import get_user_model
 from .models import Patient, Medecin, Pharmacien, Specialite
 
@@ -29,6 +30,7 @@ class SpecialiteSerializer(serializers.ModelSerializer):
         model = Specialite
         fields = ['id', 'nom']
 
+
         
 class PharmacienSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -38,10 +40,12 @@ class PharmacienSerializer(serializers.ModelSerializer):
 
 # ================== PATIENT ==================
 class PatientRegisterSerializer(serializers.ModelSerializer):
+
     user = UserSerializer()
 
     class Meta:
         model = Patient
+
         fields = ['user', 'adresse', 'telephone', 'date_naissance']
 
     def create(self, validated_data):
@@ -66,10 +70,12 @@ class MedecinRegisterSerializer(serializers.ModelSerializer):
 
 # ================== PHARMACIEN ==================
 class PharmacienRegisterSerializer(serializers.ModelSerializer):
+
     user = UserSerializer()
 
     class Meta:
         model = Pharmacien
+
         fields = ['user', 'nom_pharmacie', 'adresse_pharmacie', 'telephone']
 
     def create(self, validated_data):
@@ -77,3 +83,4 @@ class PharmacienRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**user_data, is_pharmacien=True)
         pharmacien = Pharmacien.objects.create(user=user, **validated_data)
         return pharmacien
+
