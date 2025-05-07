@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils.timezone import make_aware, is_naive
 from .models import RendezVous, DisponibiliteMedecin, Consultation
 from users.models import Patient, Medecin
 from users.serializers import PatientSerializer, MedecinSerializer
@@ -10,12 +11,21 @@ class RendezVousSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate_date_heure(self, value):
+        if is_naive(value):
+            value = make_aware(value)
         if value < self.get_current_datetime():
             raise serializers.ValidationError("La date et l'heure doivent être dans le futur.")
         return value
 
     def get_current_datetime(self):
-        return datetime.now()
+        # Récupérer la date et l'heure actuelles
+        # en tenant compte du fuseau horaire
+        # et en s'assurant qu'elles sont conscientes
+        # (aware) si le paramètre USE_TZ est activé
+        current_datetime = datetime.now()
+        if is_naive(current_datetime):
+            current_datetime = make_aware(current_datetime)
+        return current_datetime
 
 class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,6 +33,12 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, data):
+        # Rendre les heures conscientes si elles sont naïves
+        if is_naive(data['heure_debut']):
+            data['heure_debut'] = make_aware(data['heure_debut'])
+        if is_naive(data['heure_fin']):
+            data['heure_fin'] = make_aware(data['heure_fin'])
+
         # Validation synchrone pour vérifier les conflits d'horaires
         if self.check_conflict(data):
             raise serializers.ValidationError("Conflit avec une autre disponibilité.")

@@ -56,6 +56,9 @@ class MedecinDisponibiliteView(APIView):
 
         disponibilites = DisponibiliteMedecin.objects.filter(medecin=medecin)
         disponibilites_data = DisponibiliteMedecinSerializer(disponibilites, many=True).data
+        for disponibilite in disponibilites_data:
+            disponibilite['heure_debut'] = disponibilite['heure_debut'].strftime('%H:%M:%S')
+            disponibilite['heure_fin'] = disponibilite['heure_fin'].strftime('%H:%M:%S')
         medecin_data = MedecinSerializer(medecin).data
         medecin_data['disponibilites'] = disponibilites_data
 
@@ -91,7 +94,9 @@ class RendezVousView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        date = serializer.validated_data['date']
+        date = serializer.validated_data['date_heure']
+        if is_naive(date):
+            date = make_aware(date)
 
         # Vérification de la disponibilité du médecin
         if RendezVous.objects.filter(medecin=medecin, date=date, status='CONFIRMED').exists():
@@ -235,6 +240,8 @@ class PatientRendezVousHistoryView(APIView):
 
         rendezvous = RendezVous.objects.filter(patient=user.patient).order_by('-date_heure')
         data = RendezVousSerializer(rendezvous, many=True).data
+        for rendez_vous in data:
+            rendez_vous['date_heure'] = rendez_vous['date_heure'].strftime('%Y-%m-%d %H:%M:%S')
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -256,6 +263,8 @@ class MedecinRendezVousHistoryView(APIView):
 
         rendezvous = RendezVous.objects.filter(medecin=user.medecin).order_by('-date_heure')
         data = RendezVousSerializer(rendezvous, many=True).data
+        for rendez_vous in data:
+            rendez_vous['date_heure'] = rendez_vous['date_heure'].strftime('%Y-%m-%d %H:%M:%S')
         return Response(data, status=status.HTTP_200_OK)
 
 
