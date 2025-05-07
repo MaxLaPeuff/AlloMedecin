@@ -24,6 +24,13 @@ class MedecinSerializer(serializers.ModelSerializer):
         model = Medecin
         fields = ['user', 'specialite', 'numero_ordre', 'adresse_cabinet', 'telephone']
         
+        
+class PatientSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Medecin
+        fields = ['user','adresse','date_naissance', 'telephone']
+        
 class SpecialiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialite

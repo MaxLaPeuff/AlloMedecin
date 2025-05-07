@@ -1,9 +1,4 @@
 from django.contrib import admin
-from .models import User, Specialite, Patient, Medecin, Pharmacien
-
-
-# Register your models here.
-from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Patient, Medecin, Pharmacien, Specialite
 
@@ -42,4 +37,4 @@ admin.site.register(Patient, PatientAdmin)
 admin.site.register(Medecin, MedecinAdmin)
 admin.site.register(Pharmacien, PharmacienAdmin)
 admin.site.register(Specialite, SpecialiteAdmin)
->>>>>>> develop
+
