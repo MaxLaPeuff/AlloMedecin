@@ -37,4 +37,3 @@ admin.site.register(Patient, PatientAdmin)
 admin.site.register(Medecin, MedecinAdmin)
 admin.site.register(Pharmacien, PharmacienAdmin)
 admin.site.register(Specialite, SpecialiteAdmin)
-

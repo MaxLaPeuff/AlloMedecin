@@ -20,9 +20,16 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/users/', include('users.urls')),          # Pour les utilisateurs
-    path('api/consultations/', include('consultations.urls')),  # Pour les consultations
-   # path('api/payments/', include('payments.urls')),    # Pour les paiements
-   # path('api/notifications/', include('notifications.urls')),  # Pour les notifications
-]
 
+
+    path('api/users/', include('users.urls')),  # Pour les utilisateurs
+    path('api/consultations/', include('consultations.urls')),  # Pour les consultations
+    # path('api/payments/', include('payments.urls')),    # Pour les paiements
+    # path('api/notifications/', include('notifications.urls')),  # Pour les notifications
+
+    # Documentation Swagger
+    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    
+    # Documentation Redoc
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+]
