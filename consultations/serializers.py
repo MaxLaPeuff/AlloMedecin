@@ -39,10 +39,29 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
         if is_naive(data['heure_fin']):
             data['heure_fin'] = make_aware(data['heure_fin'])
 
+        # Appeler la méthode clean pour effectuer des validations supplémentaires
+        self.clean(data)
+
         # Validation synchrone pour vérifier les conflits d'horaires
         if self.check_conflict(data):
             raise serializers.ValidationError("Conflit avec une autre disponibilité.")
         return data
+
+    def clean(self, data):
+        # Vérifier que les heures de début et de fin sont renseignées
+        if data['heure_debut'] is None or data['heure_fin'] is None:
+            raise serializers.ValidationError("Les heures de début et de fin doivent être renseignées.")
+
+        # Vérifier que l'heure de début est inférieure à l'heure de fin
+        if data['heure_debut'] >= data['heure_fin']:
+            raise serializers.ValidationError("L'heure de début doit être inférieure à l'heure de fin.")
+
+        # Vérifier les contraintes spécifiques au dimanche
+        if data['jour'].strftime('%A').lower() == 'dimanche':
+            if data['heure_debut'] < datetime.time(9, 0) or data['heure_fin'] > datetime.time(17, 0):
+                raise serializers.ValidationError(
+                    "Le médecin ne peut pas être disponible le dimanche en dehors des heures de 9h à 17h."
+                )
 
     def check_conflict(self, data):
         return DisponibiliteMedecin.objects.filter(
