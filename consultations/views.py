@@ -19,7 +19,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 import json
-
+import datetime
 
 
 class MedecinDisponibiliteView(APIView):
@@ -76,7 +76,7 @@ class RendezVousView(APIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        medecin_id = kwargs.get('id')
+        medecin_id = kwargs.get('id_medecin')
         try:
             medecin = Medecin.objects.get(id=medecin_id)
         except Medecin.DoesNotExist:
@@ -91,15 +91,16 @@ class RendezVousView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        date = serializer.validated_data['date']
-
+        date_rdV = serializer.validated_data['date_heure']
+        if is_naive(date_rdV):
+            date_rdV = make_aware(date_rdV)
         # Vérification de la disponibilité du médecin
-        if RendezVous.objects.filter(medecin=medecin, date=date, status='CONFIRMED').exists():
+        if RendezVous.objects.filter(medecin=medecin, date=date_rdV, statut='Comfirme').exists():
             return Response({"error": "Le médecin a déjà un rendez-vous confirmé à cette date"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Vérification des horaires de disponibilité
-        jour = date.strftime('%A').lower()
-        heure = date.time()
+        jour = date_rdV.date()
+        heure = date_rdV.time()
 
         if not DisponibiliteMedecin.objects.filter(
             medecin=medecin,
@@ -110,20 +111,20 @@ class RendezVousView(APIView):
             return Response({"error": "Le médecin n'est pas disponible à cette heure"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Création de la demande de rendez-vous
-        rendez_vous = serializer.save(status='EN_ATTENTE')
+        rendez_vous = serializer.save(statut='En_attente')
 
         # Envoi d'une notification au médecin (par email)
         confirm_url = request.build_absolute_uri(
-            reverse('confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'CONFIRME'})
+            reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'CONFIRME'})
         )
         refuse_url = request.build_absolute_uri(
-            reverse('confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
+            reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
         )
 
         send_mail(
             subject="AllôMedecin - Nouvelle demande de rendez-vous",
             message=f"""
-                Vous avez une nouvelle demande de rendez-vous de la part de {patient.username} pour le {date}.
+                Vous avez une nouvelle demande de rendez-vous de la part de {patient.username} pour le {date_rdV}.
                 Veuillez confirmer ou refuser en cliquant sur les liens ci-dessous :
                 - Confirmer : {confirm_url}
                 - Refuser : {refuse_url}
@@ -161,13 +162,16 @@ class ConfirmRendezVous(APIView):
     def get(self, request, *args, **kwargs):
         rendez_vous_id = kwargs.get('id')
         try:
-            rendez_vous = RendezVous.objects.get(id=rendez_vous_id, medecin=request.user)
+            medecin = Medecin.objects.get(user=request.user)
+            rendez_vous = RendezVous.objects.get(id=rendez_vous_id, medecin=medecin)
+        except Medecin.DoesNotExist:
+            return Response({"error": "Vous n'êtes pas un médecin."}, status=status.HTTP_403_FORBIDDEN)
         except RendezVous.DoesNotExist:
             return Response({"error": "Rendez-vous non trouvé ou vous n'êtes pas autorisé à le modifier"}, status=status.HTTP_404_NOT_FOUND)
 
         action = kwargs.get('action')
         if action == 'CONFIRME':
-            rendez_vous.statut = 'CONFIRME'
+            rendez_vous.statut = 'Confirme'
             rendez_vous.save()
             # Notification au patient
             send_mail(
@@ -183,7 +187,7 @@ class ConfirmRendezVous(APIView):
             # Notification au patient
             send_mail(
                 subject="Rendez-vous refusé",
-                message=f"Votre rendez-vous avec le Dr. {rendez_vous.medecin.user.username} pour le {rendez_vous.date} a été refusé.",
+                message=f"Votre rendez-vous avec le Dr. {rendez_vous.medecin.user.username} pour le {rendez_vous.date_heure} a été refusé.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[rendez_vous.patient.user.email],
             )
