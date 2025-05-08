@@ -70,8 +70,10 @@ class DisponibiliteMedecinSerializer(serializers.ModelSerializer):
             heure_debut__lt=data['heure_fin'],
             heure_fin__gt=data['heure_debut']
         ).exists()
+
     def create(self, validated_data):
         return super().create(validated_data)
+
 
 class ConsultationSerializer(serializers.ModelSerializer):
     patient = PatientSerializer()  # Utilisation du PatientSerializer

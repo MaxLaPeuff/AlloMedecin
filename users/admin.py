@@ -28,7 +28,7 @@ class PharmacienAdmin(admin.ModelAdmin):
 
 # Spécialité
 class SpecialiteAdmin(admin.ModelAdmin):
-    list_display = ('nom',)
+    list_display = ('id','nom',)
     search_fields = ('nom',)
 
 # Enregistrement des modèles dans l'admin
