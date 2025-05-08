@@ -13,7 +13,7 @@ urlpatterns = [
     path('disponibilites/create/', CreateDisponibiliteView.as_view(), name='create_disponibilite'),
 
     path('rendezvous/history/patient/', PatientRendezVousHistoryView.as_view(), name='patient_rendezvous_history'),
-    
+
     path('rendezvous/history/medecin/', MedecinRendezVousHistoryView.as_view(), name='medecin_rendezvous_history'),
 
 ]

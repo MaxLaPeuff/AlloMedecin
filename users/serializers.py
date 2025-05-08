@@ -84,3 +84,13 @@ class PharmacienRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**user_data, is_pharmacien=True)
         pharmacien = Pharmacien.objects.create(user=user, **validated_data)
         return pharmacien
+
+
+class PatientSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Patient
+        fields = ['user', 'adresse', 'telephone', 'date_naissance']
+
+

@@ -17,6 +17,7 @@ from django.conf import settings
 from django.utils.timezone import now, make_aware, is_naive
 from datetime import datetime
 from django.urls import reverse
+
 from consultations.serializers import RendezVousSerializer, DisponibiliteMedecinSerializer
 from users.serializers import MedecinSerializer
 from drf_yasg.utils import swagger_auto_schema
@@ -24,6 +25,7 @@ from drf_yasg import openapi
 import datetime
 import json
 import datetime
+
 
 
 class MedecinDisponibiliteView(APIView):
@@ -60,9 +62,11 @@ class MedecinDisponibiliteView(APIView):
 
         disponibilites = DisponibiliteMedecin.objects.filter(medecin=medecin)
         disponibilites_data = DisponibiliteMedecinSerializer(disponibilites, many=True).data
+
         for disponibilite in disponibilites_data:
             disponibilite['heure_debut'] = disponibilite['heure_debut'].strftime('%H:%M:%S')
             disponibilite['heure_fin'] = disponibilite['heure_fin'].strftime('%H:%M:%S')
+
         medecin_data = MedecinSerializer(medecin).data
         medecin_data['disponibilites'] = disponibilites_data
 
@@ -104,6 +108,7 @@ class RendezVousView(APIView):
 
         # Vérification de la disponibilité du médeci_rdVn
         if RendezVous.objects.filter(medecin=medecin, date_heure=date_rdV, statut='Confirme').exists():
+
             return Response({"error": "Le médecin a déjà un rendez-vous confirmé à cette date"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Vérification des horaires de disponibilité
@@ -145,9 +150,11 @@ class RendezVousView(APIView):
         
         
         # Création de la demande de rendez-vous
+
         rendez_vous = serializer.save(statut='En_attente')
 
                 # Envoi d'une notification au médecin (par email)
+
         confirm_url = request.build_absolute_uri(
             reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'CONFIRME'})
         )
@@ -155,7 +162,7 @@ class RendezVousView(APIView):
             reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
         )
 
-       
+       try:
             send_mail(
                 subject="AllôMedecin - Nouvelle demande de rendez-vous",
                 message=f"""
@@ -172,12 +179,12 @@ class RendezVousView(APIView):
         except Exception as e:
             logger.error(f"Erreur envoi mail : {e}")
 
+
         return Response({"message": "Demande de rendez-vous envoyée avec succès. En attente de confirmation du médecin."}, status=status.HTTP_201_CREATED)
 
    
 # Vue permettant au medecin de confirmer le rendez-vous du patient
 class ConfirmRendezVous(APIView):
-    
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
@@ -210,7 +217,9 @@ class ConfirmRendezVous(APIView):
 
         action = kwargs.get('action')
         if action == 'CONFIRME':
+
             rendez_vous.statut = 'Confirme'
+
             rendez_vous.save()
             # Notification au patient
             send_mail(
@@ -221,12 +230,14 @@ class ConfirmRendezVous(APIView):
             )
             return Response({"message": "Rendez-vous confirmé avec succès."}, status=status.HTTP_200_OK)
         elif action == 'ANNULE':
-            rendez_vous.statut = 'Annulé'
+            rendez_vous.status = 'CANCELLED'
             rendez_vous.save()
             # Notification au patient
             send_mail(
                 subject="Rendez-vous refusé",
+
                 message=f"Votre rendez-vous avec le Dr. {rendez_vous.medecin.user.username} pour le {rendez_vous.date_heure} a été refusé.",
+
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[rendez_vous.patient.user.email],
             )
@@ -278,8 +289,10 @@ class PatientRendezVousHistoryView(APIView):
 
         rendezvous = RendezVous.objects.filter(patient=user.patient).order_by('-date_heure')
         data = RendezVousSerializer(rendezvous, many=True).data
+
         for rendez_vous in data:
             rendez_vous['date_heure'] = rendez_vous['date_heure'].strftime('%Y-%m-%d %H:%M:%S')
+
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -301,8 +314,10 @@ class MedecinRendezVousHistoryView(APIView):
 
         rendezvous = RendezVous.objects.filter(medecin=user.medecin).order_by('-date_heure')
         data = RendezVousSerializer(rendezvous, many=True).data
+
         for rendez_vous in data:
             rendez_vous['date_heure'] = rendez_vous['date_heure'].strftime('%Y-%m-%d %H:%M:%S')
+
         return Response(data, status=status.HTTP_200_OK)
 
 
