@@ -4,7 +4,7 @@ from .models import User, Patient, Medecin, Pharmacien, Specialite
 
 # Customisation de l'affichage de User dans l'admin
 class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_patient', 'is_medecin', 'is_pharmacien', 'is_staff')
+    list_display = ('id','username', 'email', 'first_name', 'last_name', 'is_patient', 'is_medecin', 'is_pharmacien', 'is_staff')
     list_filter = ('is_patient', 'is_medecin', 'is_pharmacien', 'is_staff')
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Rôles', {'fields': ('is_patient', 'is_medecin', 'is_pharmacien')}),
@@ -12,18 +12,18 @@ class UserAdmin(BaseUserAdmin):
 
 # Patient
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('user', 'adresse', 'telephone', 'date_naissance')
+    list_display = ('id','user', 'adresse', 'telephone', 'date_naissance')
     search_fields = ('user__username', 'user__email', 'telephone')
 
 # Médecin
 class MedecinAdmin(admin.ModelAdmin):
-    list_display = ('user', 'specialite', 'numero_ordre', 'adresse_cabinet', 'telephone')
+    list_display = ('id','user', 'specialite', 'numero_ordre', 'adresse_cabinet', 'telephone')
     list_filter = ('specialite',)
     search_fields = ('user__username', 'numero_ordre', 'user__email')
 
 # Pharmacien
 class PharmacienAdmin(admin.ModelAdmin):
-    list_display = ('user', 'nom_pharmacie', 'adresse_pharmacie', 'telephone')
+    list_display = ('id','user', 'nom_pharmacie', 'adresse_pharmacie', 'telephone')
     search_fields = ('user__username', 'nom_pharmacie')
 
 # Spécialité
