@@ -155,7 +155,7 @@ class RendezVousView(APIView):
             reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
         )
 
-       
+        try:
             send_mail(
                 subject="AllôMedecin - Nouvelle demande de rendez-vous",
                 message=f"""
