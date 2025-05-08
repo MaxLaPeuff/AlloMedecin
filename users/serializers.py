@@ -24,6 +24,13 @@ class MedecinSerializer(serializers.ModelSerializer):
         model = Medecin
         fields = ['user', 'specialite', 'numero_ordre', 'adresse_cabinet', 'telephone']
         
+        
+class PatientSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Medecin
+        fields = ['user','adresse','date_naissance', 'telephone']
+        
 class SpecialiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialite
@@ -77,3 +84,13 @@ class PharmacienRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**user_data, is_pharmacien=True)
         pharmacien = Pharmacien.objects.create(user=user, **validated_data)
         return pharmacien
+
+
+class PatientSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Patient
+        fields = ['user', 'adresse', 'telephone', 'date_naissance']
+
+
