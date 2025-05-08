@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from consultations.models import Consultation, RendezVous, DisponibiliteMedecin
 from users.models import Medecin, Patient
+import smtplib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 from rest_framework.views import APIView
@@ -13,10 +17,14 @@ from django.conf import settings
 from django.utils.timezone import now, make_aware, is_naive
 from datetime import datetime
 from django.urls import reverse
-from drf_yasg.utils import swagger_auto_schema
-from consultations.serializers import DisponibiliteMedecinSerializer, RendezVousSerializer, MedecinSerializer
-from drf_yasg import openapi
 
+from consultations.serializers import RendezVousSerializer, DisponibiliteMedecinSerializer
+from users.serializers import MedecinSerializer
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+import datetime
+import json
+import datetime
 
 
 
@@ -54,6 +62,11 @@ class MedecinDisponibiliteView(APIView):
 
         disponibilites = DisponibiliteMedecin.objects.filter(medecin=medecin)
         disponibilites_data = DisponibiliteMedecinSerializer(disponibilites, many=True).data
+
+        for disponibilite in disponibilites_data:
+            disponibilite['heure_debut'] = disponibilite['heure_debut'].strftime('%H:%M:%S')
+            disponibilite['heure_fin'] = disponibilite['heure_fin'].strftime('%H:%M:%S')
+
         medecin_data = MedecinSerializer(medecin).data
         medecin_data['disponibilites'] = disponibilites_data
 
@@ -74,7 +87,7 @@ class RendezVousView(APIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        medecin_id = kwargs.get('id')
+        medecin_id = kwargs.get('id_medecin')
         try:
             medecin = Medecin.objects.get(id=medecin_id)
         except Medecin.DoesNotExist:
@@ -89,46 +102,83 @@ class RendezVousView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        date = serializer.validated_data['date']
+        date_rdV = serializer.validated_data['date_heure']
+        if is_naive(date_rdV):
+            date_rdV = make_aware(date_rdV)
 
-        # Vérification de la disponibilité du médecin
-        if RendezVous.objects.filter(medecin=medecin, date=date, status='CONFIRMED').exists():
+        # Vérification de la disponibilité du médeci_rdVn
+        if RendezVous.objects.filter(medecin=medecin, date_heure=date_rdV, statut='Confirme').exists():
+
             return Response({"error": "Le médecin a déjà un rendez-vous confirmé à cette date"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Vérification des horaires de disponibilité
-        jour = date.strftime('%A').lower()
-        heure = date.time()
+        # jour = date.strftime('%A').lower()
+        # heure = date.time()
 
+        # if not DisponibiliteMedecin.objects.filter(
+        #     medecin=medecin,
+        #     jour=jour,
+        #     heure_debut__lte=heure,
+        #     heure_fin__gte=heure
+        # ).exists():
+        #     return Response({"error": "Le médecin n'est pas disponible à cette heure"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        # Vérification des horaires de disponibilité
+        
+        
+    
+
+
+    # S'assurer que jour est bien de type datetime.date
+    
+        jour_rdv = date_rdV.date()  # Extraire uniquement la date
+        heure_rdv = date_rdV.time()  # Extraire uniquement l'heure
+       
+        # # S'assurer que `jour` est bien de type `datetime.date`
+        # if isinstance(jour, str):
+        #     jour = datetime.strptime(jour, '%Y-%m-%d').date()
+
+        # Vérifier si une disponibilité correspond au jour et à l'heure
         if not DisponibiliteMedecin.objects.filter(
-            medecin=medecin,
-            jour=jour,
-            heure_debut__lte=heure,
-            heure_fin__gte=heure
-        ).exists():
+                medecin=medecin,
+                jour=jour_rdv,  # Comparer la date exacte
+                heure_debut__lte=heure_rdv,  # L'heure de début doit être inférieure ou égale à l'heure du rendez-vous
+                heure_fin__gte=heure_rdv  # L'heure de fin doit être supérieure ou égale à l'heure du rendez-vous
+            ).exists():
             return Response({"error": "Le médecin n'est pas disponible à cette heure"}, status=status.HTTP_400_BAD_REQUEST)
-
+        
+        
         # Création de la demande de rendez-vous
-        rendez_vous = serializer.save(status='EN_ATTENTE')
 
-        # Envoi d'une notification au médecin (par email)
+        rendez_vous = serializer.save(statut='En_attente')
+
+                # Envoi d'une notification au médecin (par email)
+
         confirm_url = request.build_absolute_uri(
-            reverse('confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'CONFIRME'})
+            reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'CONFIRME'})
         )
         refuse_url = request.build_absolute_uri(
-            reverse('confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
+            reverse('consultations:confirm_rendezvous', kwargs={'id': rendez_vous.id, 'action': 'ANNULE'})
         )
 
-        send_mail(
-            subject="AllôMedecin - Nouvelle demande de rendez-vous",
-            message=f"""
-                Vous avez une nouvelle demande de rendez-vous de la part de {patient.username} pour le {date}.
-                Veuillez confirmer ou refuser en cliquant sur les liens ci-dessous :
-                - Confirmer : {confirm_url}
-                - Refuser : {refuse_url}
-            """,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[medecin.user.email],
-        )
+       try:
+            send_mail(
+                subject="AllôMedecin - Nouvelle demande de rendez-vous",
+                message=f"""
+                    Vous avez une nouvelle demande de rendez-vous de la part de {patient.username} pour le {date_rdV}.
+                    Veuillez confirmer ou refuser en cliquant sur les liens ci-dessous :
+                    - Confirmer : {confirm_url}
+                    - Refuser : {refuse_url}
+                """,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[medecin.user.email],
+            )
+        except smtplib.SMTPException as smtp_error:
+            logger.error(f"Erreur SMTP : {smtp_error}")
+        except Exception as e:
+            logger.error(f"Erreur envoi mail : {e}")
+
 
         return Response({"message": "Demande de rendez-vous envoyée avec succès. En attente de confirmation du médecin."}, status=status.HTTP_201_CREATED)
 
@@ -158,13 +208,18 @@ class ConfirmRendezVous(APIView):
     def get(self, request, *args, **kwargs):
         rendez_vous_id = kwargs.get('id')
         try:
-            rendez_vous = RendezVous.objects.get(id=rendez_vous_id, medecin=request.user)
+            medecin = Medecin.objects.get(user=request.user)
+            rendez_vous = RendezVous.objects.get(id=rendez_vous_id, medecin=medecin)
+        except Medecin.DoesNotExist:
+            return Response({"error": "Vous n'êtes pas un médecin."}, status=status.HTTP_403_FORBIDDEN)
         except RendezVous.DoesNotExist:
             return Response({"error": "Rendez-vous non trouvé ou vous n'êtes pas autorisé à le modifier"}, status=status.HTTP_404_NOT_FOUND)
 
         action = kwargs.get('action')
         if action == 'CONFIRME':
-            rendez_vous.status = 'CONFIRMED'
+
+            rendez_vous.statut = 'Confirme'
+
             rendez_vous.save()
             # Notification au patient
             send_mail(
@@ -180,7 +235,9 @@ class ConfirmRendezVous(APIView):
             # Notification au patient
             send_mail(
                 subject="Rendez-vous refusé",
-                message=f"Votre rendez-vous avec le Dr. {rendez_vous.medecin.user.username} pour le {rendez_vous.date} a été refusé.",
+
+                message=f"Votre rendez-vous avec le Dr. {rendez_vous.medecin.user.username} pour le {rendez_vous.date_heure} a été refusé.",
+
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[rendez_vous.patient.user.email],
             )
@@ -232,6 +289,10 @@ class PatientRendezVousHistoryView(APIView):
 
         rendezvous = RendezVous.objects.filter(patient=user.patient).order_by('-date_heure')
         data = RendezVousSerializer(rendezvous, many=True).data
+
+        for rendez_vous in data:
+            rendez_vous['date_heure'] = rendez_vous['date_heure'].strftime('%Y-%m-%d %H:%M:%S')
+
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -253,6 +314,10 @@ class MedecinRendezVousHistoryView(APIView):
 
         rendezvous = RendezVous.objects.filter(medecin=user.medecin).order_by('-date_heure')
         data = RendezVousSerializer(rendezvous, many=True).data
+
+        for rendez_vous in data:
+            rendez_vous['date_heure'] = rendez_vous['date_heure'].strftime('%Y-%m-%d %H:%M:%S')
+
         return Response(data, status=status.HTTP_200_OK)
 
 

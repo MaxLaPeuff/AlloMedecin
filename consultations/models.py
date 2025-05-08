@@ -27,17 +27,18 @@ from django.core.exceptions import ValidationError
 import datetime
     
 class DisponibiliteMedecin(models.Model):
-    JOUR_CHOICES = [
-        ('lundi', 'Lundi'),
-        ('mardi', 'Mardi'),
-        ('mercredi', 'Mercredi'),
-        ('jeudi', 'Jeudi'),
-        ('vendredi', 'Vendredi'),
-        ('samedi', 'Samedi'),
-        ('dimanche', 'Dimanche'),
-    ]
+    # JOUR_CHOICES = [
+    #     ('lundi', 'Lundi'),
+    #     ('mardi', 'Mardi'),
+    #     ('mercredi', 'Mercredi'),
+    #     ('jeudi', 'Jeudi'),
+    #     ('vendredi', 'Vendredi'),
+    #     ('samedi', 'Samedi'),
+    #     ('dimanche', 'Dimanche'),
+    # ]
     medecin = models.ForeignKey("users.Medecin", on_delete=models.CASCADE)
-    jour = models.CharField(max_length=10, choices=JOUR_CHOICES)
+    # jour = models.CharField(max_length=10, choices=JOUR_CHOICES)
+    jour  = models.DateField()
     heure_debut = models.TimeField()
     heure_fin = models.TimeField()
     def clean(self): 
